@@ -203,6 +203,21 @@ async def main():
             
             try:
                 await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                await asyncio.sleep(2)
+                
+                # Закрываем модальные окна (например, "Синхронизация старых сообщений")
+                try:
+                    await page.keyboard.press("Escape")
+                    ok_btns = await page.query_selector_all('button, div[role="button"]')
+                    for btn in ok_btns:
+                        text = (await btn.inner_text()).strip().upper()
+                        if text == "OK" or text == "ОК":
+                            if await btn.is_visible():
+                                await btn.click(force=True)
+                                print("Закрыто модальное окно 'ОК'")
+                                await asyncio.sleep(1)
+                except Exception:
+                    pass
                 
                 # Ждем либо поле ввода, либо кнопку вступления
                 try:
