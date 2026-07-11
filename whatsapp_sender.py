@@ -363,37 +363,49 @@ async def main():
                             else:
                                 print("Отправлено через Enter, ждем загрузки...")
                                 
-                            print("Ожидание подтверждения отправки сервером WhatsApp...")
-                            
-                            # Ждем до 15 секунд, пока сообщение появится в чате со статусом "отправляется" (часики)
+                            print("Ожидание подтверждения отправки сервером WhatsApp (до 3 минут)...")
                             try:
-                                await page.wait_for_selector('span[data-icon="msg-time"]', timeout=15000)
-                                print("Началась отправка (появились часики)...")
+                                # Ожидание через внедренный JS-код, который точно проверяет статус именно ПОСЛЕДНЕГО сообщения
+                                success = await page.evaluate('''() => {
+                                    return new Promise((resolve) => {
+                                        let maxWait = 180000; // 3 минуты
+                                        let elapsed = 0;
+                                        let interval = setInterval(() => {
+                                            elapsed += 2000;
+                                            
+                                            // Находим все исходящие сообщения
+                                            let msgs = Array.from(document.querySelectorAll('div[data-id]')).filter(el => el.getAttribute('data-id').includes('true_'));
+                                            if (msgs.length > 0) {
+                                                let lastMsg = msgs[msgs.length - 1];
+                                                
+                                                // Проверяем статус последнего сообщения
+                                                let isSent = lastMsg.querySelector('span[data-icon="msg-check"]') !== null || lastMsg.querySelector('span[data-icon="msg-dblcheck"]') !== null;
+                                                let isError = lastMsg.querySelector('span[data-icon="error"]') !== null;
+                                                
+                                                if (isSent || isError) {
+                                                    clearInterval(interval);
+                                                    resolve(isSent ? "sent" : "error");
+                                                }
+                                            }
+                                            
+                                            if (elapsed >= maxWait) {
+                                                clearInterval(interval);
+                                                resolve("timeout");
+                                            }
+                                        }, 2000);
+                                    });
+                                }''')
                                 
-                                # Теперь ждем, пока часики не исчезнут (максимум 3 минуты)
-                                wait_time = 0
-                                max_wait = 180
-                                while wait_time < max_wait:
-                                    await asyncio.sleep(3)
-                                    wait_time += 3
+                                if success == "sent":
+                                    print("Успешно отправлено! (получена галочка от сервера)")
+                                elif success == "error":
+                                    print("ОШИБКА: WhatsApp выдал красный восклицательный знак!")
+                                else:
+                                    print("Таймаут: сервер не подтвердил отправку за 3 минуты.")
                                     
-                                    # Проверяем, есть ли ошибка
-                                    error_icon = await page.query_selector('span[data-icon="error"]')
-                                    if error_icon:
-                                        print("ОШИБКА: WhatsApp не смог отправить сообщение (красный восклицательный знак).")
-                                        break
-                                        
-                                    # Проверяем, остались ли часики
-                                    clock = await page.query_selector('span[data-icon="msg-time"]')
-                                    if not clock:
-                                        print(f"Отправка завершена! (ждали {wait_time} сек)")
-                                        break
-                                        
-                                    if wait_time % 15 == 0:
-                                        print(f"Всё ещё загружается... ({wait_time}/{max_wait} сек)")
-                            except Exception:
-                                print("Часики не появились. Возможно сообщение ушло моментально, либо окно загрузки перекрыто.")
-                                await asyncio.sleep(15) # Подстраховка
+                            except Exception as e:
+                                print(f"Сбой при ожидании отправки: {e}")
+                                await asyncio.sleep(15) # Резервное ожидание
                                 
                             group["status"] = "success"
                             group["reason"] = "Успешно отправлено медиа"
