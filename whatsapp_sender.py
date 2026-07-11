@@ -161,7 +161,10 @@ async def main():
                 pass
 
         if not text_template:
-            text_template = "Здравствуйте!"
+            text_template = "Здравствуйте! Еду в ваш ЖК на установку решетки от выпадения детей и москитной сетки 2в1.\nПишите на вотсапп +77478375125, мой робот примет заявку, и после установки я зайду к вам на замеры! Сделаю скидку! Даю гарантию! Есть рассрочка и Kaspi Red!"
+            
+        if not media_path and os.path.exists("video.mp4"):
+            media_path = os.path.abspath("video.mp4")
             
         print(f"Текст рассылки: {text_template}")
         
