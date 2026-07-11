@@ -221,7 +221,7 @@ async def main():
                 
                 # Ждем либо поле ввода, либо кнопку вступления
                 try:
-                    await page.wait_for_selector('div[title="Ввести сообщение"], div[title="Type a message"]', timeout=15000)
+                    await page.wait_for_selector('div[contenteditable="true"], div[title="Ввести сообщение"], div[title="Введите сообщение"], div[title="Type a message"]', timeout=15000)
                 except Exception:
                     # Ищем кнопки вступления в группу через JS по тексту на кнопках (независимо от локализации)
                     join_btn = None
