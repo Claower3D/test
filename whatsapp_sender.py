@@ -104,7 +104,7 @@ async def main():
     except:
         pass
 
-    temp_dir = os.path.abspath("profile_v10")
+    temp_dir = os.path.abspath("profile_v11")
     os.makedirs(temp_dir, exist_ok=True)
     
     async with async_playwright() as p:
