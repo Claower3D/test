@@ -6,7 +6,7 @@ olx.db
 olx_history.db
 *.db-journal
 /data
-whatsapp_profile/
+whatsapp_profile2/
 credentials.json
 whatsapp_groups.json
 *.log

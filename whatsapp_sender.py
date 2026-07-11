@@ -99,7 +99,7 @@ async def main():
     except:
         pass
 
-    temp_dir = os.path.abspath("whatsapp_profile")
+    temp_dir = os.path.abspath("whatsapp_profile2")
     os.makedirs(temp_dir, exist_ok=True)
     
     async with async_playwright() as p:
