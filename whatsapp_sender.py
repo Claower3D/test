@@ -314,23 +314,20 @@ async def main():
                         await plus_btn.click()
                         await asyncio.sleep(1.5)
                         
-                        # Попробуем кликнуть на пункт "Фото и видео" для рендеринга инпута
+                        # Перехватываем всплывающее окно выбора файла (File Chooser)
+                        file_input_success = False
                         try:
-                            photo_video_option = await page.wait_for_selector('span[data-icon="attach-image"], span:has-text("Фото и видео"), span:has-text("Photos & Videos"), [aria-label*="Фото"], [aria-label*="Photo"]', timeout=3000)
+                            photo_video_option = await page.wait_for_selector('span[data-icon="attach-image"], span:has-text("Фото и видео"), span:has-text("Photos & Videos"), [aria-label*="Фото"], [aria-label*="Photo"]', timeout=5000)
                             if photo_video_option:
-                                await photo_video_option.click()
-                                await asyncio.sleep(1)
-                        except Exception:
-                            pass
-                        
-                        try:
-                            file_input = await page.wait_for_selector('input[accept*="image/"], input[accept*="video/"], input[type="file"]', timeout=10000)
+                                async with page.expect_file_chooser(timeout=15000) as fc_info:
+                                    await photo_video_option.click()
+                                file_chooser = await fc_info.value
+                                await file_chooser.set_files(media_path)
+                                file_input_success = True
                         except Exception as e:
-                            print(f"Не найден input для загрузки файла: {e}")
-                            file_input = None
+                            print(f"Ошибка выбора файла (file_chooser): {e}")
                             
-                        if file_input:
-                            await file_input.set_input_files(media_path)
+                        if file_input_success:
                             
                             try:
                                 caption_box = await page.wait_for_selector('div[contenteditable="true"], div[title="Добавить подпись"], div[title="Add a caption"]', timeout=25000)
