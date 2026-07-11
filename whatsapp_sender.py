@@ -349,15 +349,17 @@ async def main():
                             
                             # Отправляем медиа
                             await page.keyboard.press("Enter")
-                            await asyncio.sleep(6) # Больше времени для загрузки больших медиафайлов
+                            await asyncio.sleep(4) 
                             
                             send_btn = await page.query_selector('span[data-icon="send"], span[data-icon="send-light"], button[aria-label="Send"], button[aria-label="Отправить"]')
                             if send_btn:
                                 await send_btn.click()
-                                await asyncio.sleep(8) # Ожидание отправки медиа
+                                print("Нажали кнопку отправки, ждем 35 секунд для загрузки видео...")
+                                await asyncio.sleep(35) # Ожидание отправки видео на сервер
                             else:
                                 # На случай если Enter уже отправил
-                                await asyncio.sleep(5)
+                                print("Отправлено через Enter, ждем 35 секунд для загрузки видео...")
+                                await asyncio.sleep(35)
                                 
                             group["status"] = "success"
                             group["reason"] = "Успешно отправлено медиа"
