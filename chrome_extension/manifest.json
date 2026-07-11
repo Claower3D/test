@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "OLX Bot Cookie Importer",
+  "version": "1.1",
+  "description": "Импортирует сессию авторизации OLX в локальную панель ботов.",
+  "permissions": [
+    "cookies"
+  ],
+  "host_permissions": [
+    "*://*.olx.kz/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.olx.kz/myaccount/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

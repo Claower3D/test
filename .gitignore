@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.env
+tokens.json
+olx.db
+olx_history.db
+*.db-journal
+/data
+whatsapp_profile/
+credentials.json
+config_whatsapp.json
+whatsapp_groups.json
+*.log
+*.png
+*.html
+/media/
+/static/media/

@@ -1,0 +1,17 @@
+<!doctype html><meta charset=utf-8><title>OLX бот — Главная панель</title>
+{theme}
+<h2>🏠 Главная панель</h2>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0">
+<a href="/stats" style="text-decoration:none"><button class=btnred>📊 Вчерашняя статистика</button></a>
+<a href="/weekly" style="text-decoration:none"><button class=btnred>📅 Еженедельная статистика</button></a>
+<a href="/dashboard" style="text-decoration:none"><button style="background:#3a86ff;border-color:#3a86ff;color:#fff">📈 Дашборд</button></a>
+<a href="/create" style="text-decoration:none"><button class=btngreen>➕ Создать объявление</button></a>
+<a href="/bots" style="text-decoration:none"><button style="background:#3a86ff;border-color:#3a86ff;color:#fff">🤖 Боты</button></a>
+<a href="/promo" style="text-decoration:none"><button style="background:#f5c542;border-color:#f5c542;color:#1a1505">🚀 ABDU</button></a>
+</div>
+<div class=card><b>Подключённые аккаунты ({n})</b>{accs}</div>
+<div class=card><b>Добавить аккаунт</b><p class=muted style="font-size:14px">Залогинься в OLX под нужным аккаунтом в этом браузере, впиши метку и нажми «Авторизовать».</p>
+<form action=/login method=get>
+<input name=account placeholder="метка, напр. account_2" required>
+<button class=btnred>Авторизовать в OLX</button></form></div>
+<div class=card><button id=runBtn style="width:100%" onclick="startRun()">▶ Запустить сбор сейчас</button></div>
