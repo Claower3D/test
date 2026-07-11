@@ -50,10 +50,10 @@ async def main():
         try:
             # Ждем появления списка чатов, что означает успешный вход
             await page.wait_for_selector('#pane-side', timeout=300000) # 5 минут на скан
-            print("✅ Авторизация успешна! Сессия сохранена.")
+            print("Успешно! Авторизация пройдена. Сессия сохранена.")
             await asyncio.sleep(3) # даем кукам записаться
-        except:
-            print("⏳ Время ожидания истекло или окно было закрыто.")
+        except Exception as e:
+            print(f"Ошибка ожидания или окно закрыто: {e}")
             
         await context.close()
 
