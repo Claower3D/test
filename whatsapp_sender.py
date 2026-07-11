@@ -104,7 +104,7 @@ async def main():
     except:
         pass
 
-    temp_dir = os.path.abspath("profile_v3")
+    temp_dir = os.path.abspath("profile_v4")
     os.makedirs(temp_dir, exist_ok=True)
     
     async with async_playwright() as p:
@@ -359,12 +359,34 @@ async def main():
                             send_btn = await page.query_selector('span[data-icon="send"], span[data-icon="send-light"], button[aria-label="Send"], button[aria-label="Отправить"]')
                             if send_btn:
                                 await send_btn.click()
-                                print("Нажали кнопку отправки, ждем 35 секунд для загрузки видео...")
-                                await asyncio.sleep(35) # Ожидание отправки видео на сервер
+                                print("Нажали кнопку отправки, ждем загрузки...")
                             else:
-                                # На случай если Enter уже отправил
-                                print("Отправлено через Enter, ждем 35 секунд для загрузки видео...")
-                                await asyncio.sleep(35)
+                                print("Отправлено через Enter, ждем загрузки...")
+                                
+                            print("Ожидание подтверждения отправки сервером WhatsApp...")
+                            wait_time = 0
+                            max_wait = 180 # Максимально ждем 3 минуты
+                            
+                            while wait_time < max_wait:
+                                await asyncio.sleep(3)
+                                wait_time += 3
+                                
+                                error_icon = await page.query_selector('span[data-icon="error"]')
+                                if error_icon:
+                                    print("ОШИБКА: WhatsApp не смог отправить сообщение (красный восклицательный знак).")
+                                    break
+                                
+                                clock_icon = await page.query_selector('span[data-icon="msg-time"]')
+                                if not clock_icon:
+                                    check_icon = await page.query_selector('span[data-icon="msg-check"], span[data-icon="msg-dblcheck"]')
+                                    if check_icon:
+                                        print(f"Успешно отправлено! (ждали {wait_time} сек)")
+                                    else:
+                                        print("Часики пропали. Считаем отправленным.")
+                                    break
+                                
+                                if wait_time % 15 == 0:
+                                    print(f"Всё ещё загружается... ({wait_time}/{max_wait} сек)")
                                 
                             group["status"] = "success"
                             group["reason"] = "Успешно отправлено медиа"
