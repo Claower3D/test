@@ -316,7 +316,12 @@ async def main():
                             print("Ошибка поиска кнопки плюс через JS:", pe)
                         
                     if plus_btn:
-                        await plus_btn.click()
+                        try:
+                            await page.keyboard.press("Escape")
+                            await asyncio.sleep(0.5)
+                            await plus_btn.click(force=True, timeout=5000)
+                        except Exception as e:
+                            print(f"Ошибка при клике на плюс: {e}")
                         await asyncio.sleep(1.5)
                         
                         # Перехватываем всплывающее окно выбора файла (File Chooser)
@@ -358,7 +363,7 @@ async def main():
                             
                             send_btn = await page.query_selector('span[data-icon="send"], span[data-icon="send-light"], button[aria-label="Send"], button[aria-label="Отправить"]')
                             if send_btn:
-                                await send_btn.click()
+                                await send_btn.click(force=True)
                                 print("Нажали кнопку отправки, ждем загрузки...")
                             else:
                                 print("Отправлено через Enter, ждем загрузки...")
