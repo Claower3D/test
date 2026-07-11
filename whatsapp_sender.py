@@ -99,7 +99,7 @@ async def main():
     except:
         pass
 
-    temp_dir = os.path.abspath("whatsapp_profile2")
+    temp_dir = os.path.abspath("profile_v3")
     os.makedirs(temp_dir, exist_ok=True)
     
     async with async_playwright() as p:
@@ -330,12 +330,22 @@ async def main():
                         if file_input_success:
                             
                             try:
-                                caption_box = await page.wait_for_selector('div[contenteditable="true"], div[title="Добавить подпись"], div[title="Add a caption"]', timeout=25000)
-                                if caption_box:
-                                    await type_text_to_whatsapp(page, caption_box, text_template)
-                                    await asyncio.sleep(1)
+                                # На экране предпросмотра медиа WhatsApp автоматически ставит фокус на поле подписи
+                                await asyncio.sleep(2)
+                                
+                                lines = text_template.split('\n')
+                                for idx, line in enumerate(lines):
+                                    if line:
+                                        await page.keyboard.type(line)
+                                    if idx < len(lines) - 1:
+                                        await page.keyboard.down("Shift")
+                                        await page.keyboard.press("Enter")
+                                        await page.keyboard.up("Shift")
+                                        await asyncio.sleep(0.1)
+                                        
+                                await asyncio.sleep(1)
                             except Exception as e:
-                                print(f"Не удалось найти поле подписи: {e}")
+                                print(f"Ошибка при вводе подписи: {e}")
                             
                             # Отправляем медиа
                             await page.keyboard.press("Enter")
