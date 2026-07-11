@@ -8,10 +8,8 @@ olx_history.db
 /data
 whatsapp_profile/
 credentials.json
-config_whatsapp.json
 whatsapp_groups.json
 *.log
 *.png
 *.html
-/media/
 /static/media/
