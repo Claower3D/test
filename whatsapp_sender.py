@@ -8,6 +8,11 @@ import time
 import winreg
 import shlex
 import datetime
+
+# Fix for Windows console unicode errors
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
