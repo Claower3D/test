@@ -200,37 +200,50 @@ async def main():
                 try:
                     await page.wait_for_selector('div[title="Ввести сообщение"], div[title="Type a message"]', timeout=15000)
                 except Exception:
-                    # Ищем кнопки вступления в группу
-                    join_btn = await page.query_selector('button:has-text("Присоединиться к группе"), div[role="button"]:has-text("Присоединиться к группе")')
-                    if not join_btn:
-                        join_btn = await page.query_selector('button:has-text("Вступить в группу"), div[role="button"]:has-text("Вступить в группу")')
-                    if not join_btn:
-                        join_btn = await page.query_selector('button:has-text("Join group"), div[role="button"]:has-text("Join group")')
-                    if not join_btn:
-                        join_btn = await page.query_selector('button:has-text("Посмотреть группу"), div[role="button"]:has-text("Посмотреть группу")')
-                    if not join_btn:
-                        join_btn = await page.query_selector('button:has-text("Открыть чат"), div[role="button"]:has-text("Открыть чат")')
-                    if not join_btn:
-                        join_btn = await page.query_selector('button:has-text("Перейти в чат"), div[role="button"]:has-text("Перейти в чат")')
+                    # Ищем кнопки вступления в группу через JS по тексту на кнопках (независимо от локализации)
+                    join_btn = None
+                    req_btn = None
                     
-                    req_btn = await page.query_selector('button:has-text("Подать заявку"), div[role="button"]:has-text("Подать заявку")')
-                    if not req_btn:
-                        req_btn = await page.query_selector('button:has-text("Запрос на вступление"), div[role="button"]:has-text("Запрос на вступление")')
-                    if not req_btn:
-                        req_btn = await page.query_selector('button:has-text("Request to join"), div[role="button"]:has-text("Request to join")')
-                    if not req_btn:
-                        req_btn = await page.query_selector('button:has-text("Запросить присоединение"), div[role="button"]:has-text("Запросить присоединение")')
+                    try:
+                        join_btn_handle = await page.evaluate_handle('''() => {
+                            const buttons = Array.from(document.querySelectorAll('button, div[role="button"]'));
+                            for (const btn of buttons) {
+                                const text = (btn.innerText || '').toLowerCase();
+                                if ((text.includes('присоединиться') || text.includes('вступить') || text.includes('join') || text.includes('посмотреть') || text.includes('открыть') || text.includes('перейти')) && !text.includes('запрос') && !text.includes('заявка')) {
+                                    return btn;
+                                }
+                            }
+                            return null;
+                        }''')
+                        join_btn = join_btn_handle.as_element()
+                    except Exception as je:
+                        print("Ошибка JS при поиске кнопки Вступить:", je)
+                        
+                    try:
+                        req_btn_handle = await page.evaluate_handle('''() => {
+                            const buttons = Array.from(document.querySelectorAll('button, div[role="button"]'));
+                            for (const btn of buttons) {
+                                const text = (btn.innerText || '').toLowerCase();
+                                if (text.includes('запрос') || text.includes('заявк') || text.includes('request')) {
+                                    return btn;
+                                }
+                            }
+                            return null;
+                        }''')
+                        req_btn = req_btn_handle.as_element()
+                    except Exception as re:
+                        print("Ошибка JS при поиске кнопки Запрос:", re)
                         
                     if req_btn:
                         await req_btn.click()
-                        await asyncio.sleep(3)
+                        await asyncio.sleep(5)
                         group["status"] = "success"
                         group["reason"] = "Подана заявка (группа закрытая)"
                         save_whatsapp_groups(groups)
                         continue
                     elif join_btn:
                         await join_btn.click()
-                        await asyncio.sleep(3)
+                        await asyncio.sleep(6) # Ждем открытия чата
                     else:
                         group["status"] = "error"
                         group["reason"] = "Не удалось вступить в группу"
@@ -266,16 +279,49 @@ async def main():
                 if media_path:
                     plus_btn = None
                     try:
-                        plus_btn = await page.wait_for_selector('span[data-icon="plus"], span[data-icon="clip"], span[data-icon="attach-menu-plus"], div[title*="Прикреп"], div[title*="Attach"], div[title="Вложения"], button[aria-label*="Прикреп"], button[aria-label*="Attach"], div[aria-label*="Прикреп"], div[aria-label*="Attach"]', timeout=5000)
-                    except Exception as e:
-                        print(f"Ошибка поиска скрепки: {e}")
+                        # Попробуем сначала стандартный wait_for_selector
+                        plus_btn = await page.wait_for_selector('span[data-icon="plus"], span[data-icon="clip"], span[data-icon="attach-menu-plus"], button[title*="Прикреп"], button[aria-label*="Прикреп"]', timeout=8000)
+                    except Exception:
+                        pass
+                        
+                    if not plus_btn:
+                        # Если не нашли стандартным селектором, ищем умным JS-скриптом
+                        try:
+                            plus_btn_handle = await page.evaluate_handle('''() => {
+                                const footer = document.querySelector('footer');
+                                if (!footer) return null;
+                                const buttons = footer.querySelectorAll('button, div[role="button"]');
+                                for (const btn of buttons) {
+                                    const label = (btn.getAttribute('aria-label') || btn.getAttribute('title') || '').toLowerCase();
+                                    if (label.includes('прикреп') || label.includes('attach') || label.includes('вложен') || label.includes('plus') || label.includes('плюс')) {
+                                        return btn;
+                                    }
+                                    if (btn.querySelector('[data-icon="plus"]') || btn.querySelector('[data-icon="clip"]') || btn.querySelector('[data-icon="attach-menu-plus"]')) {
+                                        return btn;
+                                    }
+                                }
+                                if (buttons.length > 0) return buttons[0];
+                                return null;
+                            }''')
+                            plus_btn = plus_btn_handle.as_element()
+                        except Exception as pe:
+                            print("Ошибка поиска кнопки плюс через JS:", pe)
                         
                     if plus_btn:
                         await plus_btn.click()
-                        await asyncio.sleep(1)
+                        await asyncio.sleep(1.5)
+                        
+                        # Попробуем кликнуть на пункт "Фото и видео" для рендеринга инпута
+                        try:
+                            photo_video_option = await page.wait_for_selector('span[data-icon="attach-image"], span:has-text("Фото и видео"), span:has-text("Photos & Videos"), [aria-label*="Фото"], [aria-label*="Photo"]', timeout=3000)
+                            if photo_video_option:
+                                await photo_video_option.click()
+                                await asyncio.sleep(1)
+                        except Exception:
+                            pass
                         
                         try:
-                            file_input = await page.wait_for_selector('input[accept*="image/"], input[accept*="video/"], input[type="file"]', timeout=5000)
+                            file_input = await page.wait_for_selector('input[accept*="image/"], input[accept*="video/"], input[type="file"]', timeout=10000)
                         except Exception as e:
                             print(f"Не найден input для загрузки файла: {e}")
                             file_input = None
