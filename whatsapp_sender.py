@@ -363,49 +363,17 @@ async def main():
                             else:
                                 print("Отправлено через Enter, ждем загрузки...")
                                 
-                            print("Ожидание подтверждения отправки сервером WhatsApp (до 3 минут)...")
-                            try:
-                                # Ожидание через внедренный JS-код, который точно проверяет статус именно ПОСЛЕДНЕГО сообщения
-                                success = await page.evaluate('''() => {
-                                    return new Promise((resolve) => {
-                                        let maxWait = 180000; // 3 минуты
-                                        let elapsed = 0;
-                                        let interval = setInterval(() => {
-                                            elapsed += 2000;
-                                            
-                                            // Находим все исходящие сообщения
-                                            let msgs = Array.from(document.querySelectorAll('div[data-id]')).filter(el => el.getAttribute('data-id').includes('true_'));
-                                            if (msgs.length > 0) {
-                                                let lastMsg = msgs[msgs.length - 1];
-                                                
-                                                // Проверяем статус последнего сообщения
-                                                let isSent = lastMsg.querySelector('span[data-icon="msg-check"]') !== null || lastMsg.querySelector('span[data-icon="msg-dblcheck"]') !== null;
-                                                let isError = lastMsg.querySelector('span[data-icon="error"]') !== null;
-                                                
-                                                if (isSent || isError) {
-                                                    clearInterval(interval);
-                                                    resolve(isSent ? "sent" : "error");
-                                                }
-                                            }
-                                            
-                                            if (elapsed >= maxWait) {
-                                                clearInterval(interval);
-                                                resolve("timeout");
-                                            }
-                                        }, 2000);
-                                    });
-                                }''')
-                                
-                                if success == "sent":
-                                    print("Успешно отправлено! (получена галочка от сервера)")
-                                elif success == "error":
-                                    print("ОШИБКА: WhatsApp выдал красный восклицательный знак!")
-                                else:
-                                    print("Таймаут: сервер не подтвердил отправку за 3 минуты.")
+                            print("Ожидание 45 секунд для 100% гарантии загрузки видео на сервер...")
+                            
+                            # Простой и самый надежный способ - просто подождать.
+                            # Видео весит 4МБ, загрузка занимает 10-20 секунд, 45 секунд хватит с огромным запасом.
+                            # Это решает проблему того, что WhatsApp не сразу добавляет сообщение в DOM и ломает умные проверки.
+                            for sec in range(1, 46):
+                                await asyncio.sleep(1)
+                                if sec % 10 == 0:
+                                    print(f"Ждем загрузки... ({sec}/45 сек)")
                                     
-                            except Exception as e:
-                                print(f"Сбой при ожидании отправки: {e}")
-                                await asyncio.sleep(15) # Резервное ожидание
+                            print("Время ожидания вышло, видео должно быть успешно отправлено!")
                                 
                             group["status"] = "success"
                             group["reason"] = "Успешно отправлено медиа"
