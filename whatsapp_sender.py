@@ -104,7 +104,7 @@ async def main():
     except:
         pass
 
-    temp_dir = os.path.abspath("profile_v11")
+    temp_dir = os.path.abspath("profile_v13")
     os.makedirs(temp_dir, exist_ok=True)
     
     async with async_playwright() as p:
@@ -383,17 +383,21 @@ async def main():
                             else:
                                 print("Отправлено через Enter, ждем загрузки...")
                                 
-                            print("Ожидание 45 секунд для 100% гарантии загрузки видео на сервер...")
+                            print("Ждем 5 секунд, чтобы сообщение появилось в чате...")
+                            await asyncio.sleep(5)
                             
-                            # Простой и самый надежный способ - просто подождать.
-                            # Видео весит 4МБ, загрузка занимает 10-20 секунд, 45 секунд хватит с огромным запасом.
-                            # Это решает проблему того, что WhatsApp не сразу добавляет сообщение в DOM и ломает умные проверки.
-                            for sec in range(1, 46):
-                                await asyncio.sleep(1)
-                                if sec % 10 == 0:
-                                    print(f"Ждем загрузки... ({sec}/45 сек)")
-                                    
-                            print("Время ожидания вышло, видео должно быть успешно отправлено!")
+                            print("Ожидаем завершения загрузки видео на сервер (пропадание часиков)...")
+                            wait_time = 0
+                            max_wait = 300  # Максимум 5 минут
+                            while wait_time < max_wait:
+                                clock = await page.query_selector('span[data-icon="msg-time"]')
+                                if not clock:
+                                    print(f"Загрузка завершена! (заняло {wait_time+5} сек)")
+                                    break
+                                await asyncio.sleep(2)
+                                wait_time += 2
+                                if wait_time % 10 == 0:
+                                    print(f"Всё ещё грузится... ({wait_time}/{max_wait} сек)")
                                 
                             group["status"] = "success"
                             group["reason"] = "Успешно отправлено медиа"
